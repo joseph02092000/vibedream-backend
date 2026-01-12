@@ -1,53 +1,66 @@
 const express = require("express");
-const axios = require("axios");
-const cors = require("cors");
+const fetch = require("node-fetch");
 
 const app = express();
-app.use(cors());
-app.use(express.json());
 
-// Ruta raíz para verificar que el backend funciona
+/**
+ * Health check
+ */
 app.get("/", (req, res) => {
   res.send("Backend running");
 });
 
-// Endpoint para buscar jobs
-app.get("/api/jobs/search", async (req, res) => {
-  const { role, location } = req.query;
+/**
+ * Debug env (para verificar Railway + API Key)
+ */
+app.get("/debug/env", (req, res) => {
+  res.json({
+    hasRapidApiKey: !!process.env.RAPIDAPI_KEY
+  });
+});
 
-  // Validación de parámetros
-  if (!role || !location) {
-    return res
-      .status(400)
-      .json({ error: "Please provide both role and location parameters" });
-  }
-
+/**
+ * Jobs endpoint
+ * Example:
+ * /jobs?role=software+engineer&location=usa
+ */
+app.get("/jobs", async (req, res) => {
   try {
-    const options = {
-      method: "GET",
-      url: "https://jsearch.p.rapidapi.com/search",
-      params: {
-        query: `${role} in ${location}`,
-        page: "1",
-        num_pages: "1",
-      },
+    const { role, location } = req.query;
+
+    if (!role || !location) {
+      return res.status(400).json({
+        error: "Please provide both role and location parameters"
+      });
+    }
+
+    const url =
+      `https://jsearch.p.rapidapi.com/search?query=${encodeURIComponent(
+        role + " in " + location
+      )}&page=1&num_pages=1`;
+
+    const response = await fetch(url, {
       headers: {
         "X-RapidAPI-Key": process.env.RAPIDAPI_KEY,
-        "X-RapidAPI-Host": process.env.RAPIDAPI_HOST,
-      },
-    };
+        "X-RapidAPI-Host": "jsearch.p.rapidapi.com"
+      }
+    });
 
-    const response = await axios.request(options);
-    res.json(response.data.data);
+    const data = await response.json();
+    res.json(data);
+
   } catch (error) {
-    console.error("Error fetching jobs:", error.message);
-    res.status(500).json({ error: "Error fetching jobs" });
+    console.error("ERROR FETCHING JOBS:", error);
+    res.status(500).json({
+      error: "Error fetching jobs"
+    });
   }
 });
 
-// ⚡ Puerto de Railway, solo se declara una vez
-const PORT = process.env.PORT || 3000;
+/**
+ * START SERVER
+ */
+const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
-
