@@ -6,15 +6,16 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Raíz del servidor
+// Ruta raíz para verificar que el backend funciona
 app.get("/", (req, res) => {
   res.send("Backend running");
 });
 
-// Endpoint de jobs
+// Endpoint para buscar jobs
 app.get("/api/jobs/search", async (req, res) => {
   const { role, location } = req.query;
 
+  // Validación de parámetros
   if (!role || !location) {
     return res
       .status(400)
@@ -25,7 +26,11 @@ app.get("/api/jobs/search", async (req, res) => {
     const options = {
       method: "GET",
       url: "https://jsearch.p.rapidapi.com/search",
-      params: { query: `${role} in ${location}`, page: "1", num_pages: "1" },
+      params: {
+        query: `${role} in ${location}`,
+        page: "1",
+        num_pages: "1",
+      },
       headers: {
         "X-RapidAPI-Key": process.env.RAPIDAPI_KEY,
         "X-RapidAPI-Host": process.env.RAPIDAPI_HOST,
@@ -40,13 +45,9 @@ app.get("/api/jobs/search", async (req, res) => {
   }
 });
 
-// Puerto de Railway
+// ⚡ Puerto de Railway, solo se declara una vez
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
-// Puerto Railway
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+
