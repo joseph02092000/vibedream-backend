@@ -6,22 +6,24 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Raíz para probar
+// Test endpoint
 app.get("/", (req, res) => {
   res.send("Backend running");
 });
 
-// Endpoint de jobs
+// Jobs search endpoint
 app.get("/api/jobs/search", async (req, res) => {
   try {
     const { role, location } = req.query;
 
+    // Validación rápida
     if (!role || !location) {
       return res
         .status(400)
         .json({ error: "Please provide both role and location parameters" });
     }
 
+    // Llamada a JSearch API
     const response = await axios.get("https://jsearch.p.rapidapi.com/search", {
       params: {
         query: `${role} in ${location}`,
@@ -41,6 +43,7 @@ app.get("/api/jobs/search", async (req, res) => {
   }
 });
 
+// Puerto Railway
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
